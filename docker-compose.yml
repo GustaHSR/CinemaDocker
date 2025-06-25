@@ -1,0 +1,80 @@
+services:
+  # Serviço do Banco de Dados PostgreSQL
+  db:
+    image: postgres:16-alpine
+    container_name: cinema
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: cinema
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - cine_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d cinema"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    ports:
+      - "3333:80"
+    depends_on:
+      - db
+    networks:
+      - cine_net
+    restart: unless-stopped
+
+  # Serviço do Backend NestJS
+  backend:
+    container_name: cinema-backend
+    build:
+      context: ./cinema-backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://admin:admin@db:5432/cinema?schema=public"
+      NEXT_PUBLIC_API_URL: "http://localhost:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "npx prisma migrate deploy && node dist/src/main.js"
+    networks:
+      - cine_net
+
+  # --- SEÇÃO DO FRONTEND CORRIGIDA ---
+# --- SEÇÃO DO FRONTEND FINAL E CORRIGIDA ---
+# /docker-compose.yml
+
+  frontend:
+    container_name: cinema-frontend
+    build:
+      context: ./cinema-frontend
+      dockerfile: Dockerfile
+      args:
+        # CORREÇÃO FINAL: A URL da API para o frontend deve ser "/api"
+        # para que o Nginx possa redirecionar as chamadas.
+        NEXT_PUBLIC_API_URL: "/api"
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - cine_net
+
+volumes:
+  postgres_data:
+
+networks:
+  cine_net:
+    driver: bridge
