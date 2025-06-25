@@ -15,18 +15,17 @@ services:
           property: connectionString
     preDeployCommand: "npx prisma migrate deploy"
     startCommand: "node dist/src/main.js"
+
   - type: web
     name: cinema-frontend
     env: docker
     dockerContext: ./cinema-frontend
     dockerfilePath: ./cinema-frontend/Dockerfile
     plan: free
-    build:
-      args:
-        NEXT_PUBLIC_API_URL: "/api"
-    rewrites:
-      - source: /api/:path*
-        destination: https://cinema-backend.onrender.com/:path*
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: "/api"
+
 databases:
   - name: cinema-db
     plan: free
