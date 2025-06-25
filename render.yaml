@@ -42,7 +42,7 @@ services:
         destination: https://cinema-backend.onrender.com/:path*
 
   # ----------------- Banco de Dados (PostgreSQL) -----------------
-  - type: psql
+  - type: pg
     name: cinema-db # Nome do banco de dados
     plan: free # Ou o plano que preferir
     # O usuário, senha e nome do banco são gerenciados pela Render
