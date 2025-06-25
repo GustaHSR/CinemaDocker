@@ -1,8 +1,4 @@
-# Blueprint para implantar o backend Nest.js, o frontend React e o banco de dados PostgreSQL.
-
-# A seção 'services' define os seus aplicativos (backend e frontend).
 services:
-  # Serviço do Backend NestJS
   - type: web
     name: cinema-backend
     env: docker
@@ -19,26 +15,19 @@ services:
           property: connectionString
     preDeployCommand: "npx prisma migrate deploy"
     startCommand: "node dist/src/main.js"
-
-  # Serviço do Frontend React com Nginx
   - type: web
     name: cinema-frontend
     env: docker
     dockerContext: ./cinema-frontend
     dockerfilePath: ./cinema-frontend/Dockerfile
     plan: free
-    # A seção 'build' passa argumentos para a construção do Docker.
     build:
       args:
         NEXT_PUBLIC_API_URL: "/api"
-    # A seção 'rewrites' redireciona as chamadas de API para o backend.
     rewrites:
       - source: /api/:path*
         destination: https://cinema-backend.onrender.com/:path*
-
-# A seção 'databases' define os bancos de dados. É uma seção separada de 'services'.
 databases:
-  # Banco de Dados PostgreSQL
   - name: cinema-db
     plan: free
     databaseName: cinema
