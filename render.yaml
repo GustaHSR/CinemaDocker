@@ -1,7 +1,6 @@
 # render.yaml
-# Versão com a estrutura correta: 'services' e 'databases' são seções separadas.
+# Corrigido para remover o 'npm install' do preDeployCommand
 
-# Seção para serviços web, workers em segundo plano, etc.
 services:
   # ----------------- Backend (Nest.js com Prisma) -----------------
   - type: web
@@ -16,16 +15,19 @@ services:
         value: 3001
       - key: DATABASE_URL
         fromDatabase:
-          # O nome aqui deve corresponder ao nome do banco na seção 'databases'
           name: cinema-db
           property: connectionString
 
-    preDeployCommand: "npm install && npx prisma migrate deploy"
+    # --- CORREÇÃO AQUI ---
+    # Removido o "npm install &&". O preDeployCommand deve apenas rodar a migração.
+    preDeployCommand: "npx prisma migrate deploy"
+    
     startCommand: "node dist/src/main.js"
 
   # ----------------- Frontend (React com Nginx) -----------------
   - type: web
     name: cinema-frontend
+    # ... (o resto da configuração do frontend permanece igual) ...
     env: docker
     dockerContext: ./cinema-frontend
     dockerfilePath: ./cinema-frontend/Dockerfile
@@ -40,8 +42,7 @@ services:
 
 # Seção SEPARADA e de nível superior para bancos de dados
 databases:
-  # A lista de bancos de dados não usa a propriedade 'type'
-  - name: cinema-db # Nome de referência para o serviço
+  - name: cinema-db
     plan: free
-    databaseName: cinema # Nome do banco de dados (igual ao seu docker-compose)
-    user: admin          # Nome do usuário (igual ao seu docker-compose)
+    databaseName: cinema
+    user: admin
