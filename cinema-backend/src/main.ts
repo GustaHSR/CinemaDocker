@@ -6,6 +6,6 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.NEXT_PUBLIC_API_URL, // frontend React
   });
-  await app.listen(3001);
+  await app.listen(process.env.PORT || 3001, '0.0.0.0');
 }
 bootstrap();
