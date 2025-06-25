@@ -1,8 +1,8 @@
-# render.yaml
-# Corrigido para remover o 'npm install' do preDeployCommand
+# Blueprint para implantar o backend Nest.js, o frontend React e o banco de dados PostgreSQL.
 
+# A seção 'services' define os seus aplicativos (backend e frontend).
 services:
-  # ----------------- Backend (Nest.js com Prisma) -----------------
+  # Serviço do Backend NestJS
   - type: web
     name: cinema-backend
     env: docker
@@ -17,31 +17,28 @@ services:
         fromDatabase:
           name: cinema-db
           property: connectionString
-
-    # --- CORREÇÃO AQUI ---
-    # Removido o "npm install &&". O preDeployCommand deve apenas rodar a migração.
     preDeployCommand: "npx prisma migrate deploy"
-    
     startCommand: "node dist/src/main.js"
 
-  # ----------------- Frontend (React com Nginx) -----------------
+  # Serviço do Frontend React com Nginx
   - type: web
     name: cinema-frontend
-    # ... (o resto da configuração do frontend permanece igual) ...
     env: docker
     dockerContext: ./cinema-frontend
     dockerfilePath: ./cinema-frontend/Dockerfile
     plan: free
+    # A seção 'build' passa argumentos para a construção do Docker.
     build:
       args:
         NEXT_PUBLIC_API_URL: "/api"
-
+    # A seção 'rewrites' redireciona as chamadas de API para o backend.
     rewrites:
       - source: /api/:path*
         destination: https://cinema-backend.onrender.com/:path*
 
-# Seção SEPARADA e de nível superior para bancos de dados
+# A seção 'databases' define os bancos de dados. É uma seção separada de 'services'.
 databases:
+  # Banco de Dados PostgreSQL
   - name: cinema-db
     plan: free
     databaseName: cinema
