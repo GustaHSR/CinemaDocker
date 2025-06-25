@@ -3,8 +3,8 @@ services:
     name: cinema-backend
     env: docker
     plan: free
-    dockerContext: ./cinema-backend
-    dockerfilePath: Dockerfile  # <- agora está correto, relativo ao context
+    dockerContext: cinema-backend
+    dockerfilePath: Dockerfile
     healthCheckPath: /
     envVars:
       - key: PORT
@@ -18,11 +18,11 @@ services:
     name: cinema-frontend
     env: docker
     plan: free
-    dockerContext: ./cinema-frontend
+    dockerContext: cinema-frontend
     dockerfilePath: Dockerfile
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: "/api"
+        value: "https://cinema-backend-3ej3.onrender.com/api" # <- Use a URL completa, não apenas "/api"
 
 databases:
   - name: cinema-db
