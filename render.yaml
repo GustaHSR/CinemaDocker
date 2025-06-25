@@ -1,49 +1,47 @@
 # render.yaml
-# Substitui o docker-compose.yml para deploy na Render
+# Versão com a estrutura correta: 'services' e 'databases' são seções separadas.
 
+# Seção para serviços web, workers em segundo plano, etc.
 services:
   # ----------------- Backend (Nest.js com Prisma) -----------------
   - type: web
-    name: cinema-backend # Nome do serviço de backend
+    name: cinema-backend
     env: docker
     dockerContext: ./cinema-backend
     dockerfilePath: ./cinema-backend/Dockerfile
-    plan: free # Ou o plano que preferir
-    healthCheckPath: / # Rota para o Render verificar se a API está no ar
+    plan: free
+    healthCheckPath: /
     envVars:
+      - key: PORT
+        value: 3001
       - key: DATABASE_URL
         fromDatabase:
-          name: cinema-db # Nome do serviço de banco de dados abaixo
+          # O nome aqui deve corresponder ao nome do banco na seção 'databases'
+          name: cinema-db
           property: connectionString
-      - key: PORT
-        value: 3001 # A porta que o backend escuta INTERNAMENTE
 
-    # Comandos do docker-compose divididos para o padrão da Render:
-    preDeployCommand: "npm install && npx prisma migrate deploy" # Instala dependências e roda migrações
-    startCommand: "node dist/src/main.js" # Comando para iniciar o servidor
+    preDeployCommand: "npm install && npx prisma migrate deploy"
+    startCommand: "node dist/src/main.js"
 
   # ----------------- Frontend (React com Nginx) -----------------
   - type: web
-    name: cinema-frontend # Nome do serviço de frontend
+    name: cinema-frontend
     env: docker
     dockerContext: ./cinema-frontend
     dockerfilePath: ./cinema-frontend/Dockerfile
-    plan: free # Ou o plano que preferir
+    plan: free
     build:
       args:
-        # Passa o argumento para o build do frontend, como no docker-compose
         NEXT_PUBLIC_API_URL: "/api"
 
-    # A "mágica" acontece aqui.
-    # Regra para redirecionar as chamadas de API para o backend.
     rewrites:
-      - source: /api/:path* # Captura qualquer chamada para /api/...
-        # Redireciona para a URL do serviço de backend, mantendo o caminho.
+      - source: /api/:path*
         destination: https://cinema-backend.onrender.com/:path*
 
-  # ----------------- Banco de Dados (PostgreSQL) -----------------
-  - type: pg
-    name: cinema-db # Nome do banco de dados
-    plan: free # Ou o plano que preferir
-    # O usuário, senha e nome do banco são gerenciados pela Render
-    # e injetados na DATABASE_URL.
+# Seção SEPARADA e de nível superior para bancos de dados
+databases:
+  # A lista de bancos de dados não usa a propriedade 'type'
+  - name: cinema-db # Nome de referência para o serviço
+    plan: free
+    databaseName: cinema # Nome do banco de dados (igual ao seu docker-compose)
+    user: admin          # Nome do usuário (igual ao seu docker-compose)
