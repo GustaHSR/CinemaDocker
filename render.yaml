@@ -1,0 +1,49 @@
+# render.yaml
+# Substitui o docker-compose.yml para deploy na Render
+
+services:
+  # ----------------- Backend (Nest.js com Prisma) -----------------
+  - type: web
+    name: cinema-backend # Nome do serviço de backend
+    env: docker
+    dockerContext: ./cinema-backend
+    dockerfilePath: ./cinema-backend/Dockerfile
+    plan: free # Ou o plano que preferir
+    healthCheckPath: / # Rota para o Render verificar se a API está no ar
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: cinema-db # Nome do serviço de banco de dados abaixo
+          property: connectionString
+      - key: PORT
+        value: 3001 # A porta que o backend escuta INTERNAMENTE
+
+    # Comandos do docker-compose divididos para o padrão da Render:
+    preDeployCommand: "npm install && npx prisma migrate deploy" # Instala dependências e roda migrações
+    startCommand: "node dist/src/main.js" # Comando para iniciar o servidor
+
+  # ----------------- Frontend (React com Nginx) -----------------
+  - type: web
+    name: cinema-frontend # Nome do serviço de frontend
+    env: docker
+    dockerContext: ./cinema-frontend
+    dockerfilePath: ./cinema-frontend/Dockerfile
+    plan: free # Ou o plano que preferir
+    build:
+      args:
+        # Passa o argumento para o build do frontend, como no docker-compose
+        NEXT_PUBLIC_API_URL: "/api"
+
+    # A "mágica" acontece aqui.
+    # Regra para redirecionar as chamadas de API para o backend.
+    rewrites:
+      - source: /api/:path* # Captura qualquer chamada para /api/...
+        # Redireciona para a URL do serviço de backend, mantendo o caminho.
+        destination: https://cinema-backend.onrender.com/:path*
+
+  # ----------------- Banco de Dados (PostgreSQL) -----------------
+  - type: psql
+    name: cinema-db # Nome do banco de dados
+    plan: free # Ou o plano que preferir
+    # O usuário, senha e nome do banco são gerenciados pela Render
+    # e injetados na DATABASE_URL.

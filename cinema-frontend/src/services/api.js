@@ -1,6 +1,6 @@
 
 export async function getFilmes() {
-  const res = await fetch(`/api//filmes`);
+  const res = await fetch(`/api/filmes`);
   return res.json();
 }
 
